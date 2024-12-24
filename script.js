@@ -1,131 +1,168 @@
-/* General Styles */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #fef7f3; /* Light cream background */
-  color: #333;
-  margin: 0;
-  padding: 0;
-  position: relative; /* For positioning the mouse-follow background */
-}
+const GEMINI_API_KEY = "AIzaSyCZlSs61yMB9gWIWcEmVO1He9lVB0T9KBk"; // Replace with your actual API key
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-/* Mouse-follow background */
-#mouse-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 200px;
-  pointer-events: none; /* Makes sure this layer doesn't interfere with other elements */
-  background: radial-gradient(circle, rgba(216, 142, 180, 0.5) 20%, rgba(216, 142, 180, 0) 60%);
-  transition: transform 0.1s ease-out;
-  border-radius: 50%;
-  opacity: 0.6;
-  z-index: -1; /* Places it behind the content */
-  transform: scale(0);
-}
+const preferencesForm = document.getElementById("preferencesForm");
+const recommendationsAccordion = document.getElementById("recommendationsAccordion");
+const makeupHacksSection = document.getElementById("makeupHacks");
 
-/* Title */
-.main-title {
-  color: #d88eb4; /* Soft pink */
-  font-weight: bold;
-}
+// Handle form submission
+preferencesForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-/* Form Section */
-form {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+  // Get user preferences
+  const skinType = document.getElementById("skinType").value;
+  const occasion = document.getElementById("occasion").value;
 
-/* Input and Select Box */
-select, .form-select {
-  background-color: #fef7f3; /* Light cream */
-  border: 1px solid #e0c8b8; /* Light beige border */
-  border-radius: 8px;
-  padding: 10px;
-  transition: all 0.3s;
-}
-
-select:focus, .form-select:focus {
-  border-color: #d88eb4; /* Soft pink border on focus */
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(216, 142, 180, 0.3);
-}
-
-/* Button */
-button {
-  background-color: #d88eb4; /* Soft pink */
-  color: #fff;
-  font-weight: bold;
-  border-radius: 8px;
-  padding: 12px;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background-color: #c97b9f; /* Slightly darker pink on hover */
-}
-
-/* Accordion */
-.accordion-button {
-  background-color: #fef7f3; /* Light cream */
-  color: #333;
-  font-weight: normal;
-  border: none;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-.accordion-button:not(.collapsed) {
-  background-color: #e9d3d0; /* Light pinkish cream when expanded */
-}
-
-.accordion-body {
-  background-color: #fef7f3; /* Light cream */
-  border-radius: 8px;
-  padding: 15px;
-}
-
-/* Makeup Hacks Section */
-#makeupHacks {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-#makeupHacks h2 {
-  color: #d88eb4; /* Soft pink */
-  font-weight: bold;
-}
-
-.hacks-content {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #666;
-}
-
-/* Button on hacks */
-button {
-  background-color: #d88eb4;
-}
-
-button:hover {
-  background-color: #c97b9f;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;
+  if (!skinType || !occasion) {
+    alert("Please select both skin type and occasion.");
+    return;
   }
 
-  form {
-    padding: 15px;
+  // Create prompts
+  const recommendationsPrompt = `Provide foundation recommendations for ${skinType} skin suitable for a ${occasion}.`;
+  const makeupHacksPrompt = `Provide detailed makeup hacks for ${skinType} skin suitable for a ${occasion}.`;
+
+  // Fetch data from the API
+  const [recommendationsResponse, makeupHacksResponse] = await Promise.all([
+    fetchFromGeminiAPI(recommendationsPrompt),
+    fetchFromGeminiAPI(makeupHacksPrompt),
+  ]);
+
+  if (recommendationsResponse) {
+    renderDynamicSections(recommendationsResponse, recommendationsAccordion, "recommendations");
   }
 
-  .hacks-content {
-    font-size: 14px;
+  if (makeupHacksResponse) {
+    renderDynamicSections(makeupHacksResponse, makeupHacksSection, "makeupHacks");
+  }
+});
+
+// Fetch data from the Gemini API
+async function fetchFromGeminiAPI(prompt) {
+  try {
+    const payload = {
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+    };
+
+    const response = await fetch(GEMINI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch data from Gemini API.");
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    alert("Error fetching data. Please try again.");
+    return null;
   }
 }
+
+// Render content dynamically
+function renderDynamicSections(response, container, type) {
+  const text = response.candidates[0]?.content.parts[0]?.text || "";
+  const sections = extractSections(text);
+
+  renderAccordion(sections, container, type);
+}
+
+// Extract sections based on headers
+function extractSections(text) {
+  const lines = text.split("\n");
+  const sections = {};
+  let currentHeader = null;
+
+  lines.forEach((line) => {
+    if (line.startsWith("**")) {
+      currentHeader = line.replace(/\*\*/g, "").trim();
+      sections[currentHeader] = [];
+    } else if (currentHeader && line.trim()) {
+      sections[currentHeader].push(line.trim());
+    }
+  });
+
+  return sections;
+}
+
+// Render accordion dynamically
+function renderAccordion(sections, container, type) {
+  container.innerHTML = "";
+
+  Object.entries(sections).forEach(([header, content]) => {
+    const formattedContent = content
+      .map((line) => {
+        if (line.startsWith("*")) {
+          return `<li>${line.slice(1).trim()}</li>`;
+        }
+        return `<p>${line}</p>`;
+      })
+      .join("");
+
+    const html = `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="${type}-${header.replace(/\s+/g, "")}Heading">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${type}-${header.replace(/\s+/g, "")}" aria-expanded="false">
+            ${header}
+          </button>
+        </h2>
+        <div id="${type}-${header.replace(/\s+/g, "")}" class="accordion-collapse collapse" data-bs-parent="#${type}">
+          <div class="accordion-body">
+            <ul>${formattedContent}</ul>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML += html;
+  });
+}
+
+// Select the mouse background element
+const mouseBackground = document.getElementById('mouse-background');
+const loadingSpinner = document.getElementById('loadingSpinner');
+
+// Add event listener for mouse movement
+document.addEventListener('mousemove', (event) => {
+  const mouseX = event.clientX;
+  const mouseY = event.clientY;
+  
+  // Update the position of the background element to follow the mouse
+  mouseBackground.style.left = `${mouseX - mouseBackground.offsetWidth / 2}px`; // Center the background on the cursor
+  mouseBackground.style.top = `${mouseY - mouseBackground.offsetHeight / 2}px`;  // Center the background on the cursor
+  
+  // Make sure the background has a smooth scaling and movement
+  mouseBackground.style.transform = `scale(1.5)`; // Scale the background when the mouse moves
+});
+
+// Reset the background scale when mouse stops moving
+let timer;
+document.addEventListener('mousemove', () => {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    mouseBackground.style.transform = `scale(1)`; // Reset to normal scale
+  }, 100);
+});
+
+// Handle the form submission
+preferencesForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  // Show the loading spinner and hide recommendations
+  loadingSpinner.style.display = 'block';
+
+  // Simulate an API call to fetch recommendations (this will be replaced by real data in a real app)
+  setTimeout(() => {
+    // Simulate recommendations loading
+    loadingSpinner.style.display = 'none';
+    recommendationsAccordion.style.display = 'block';
+
+  }, 4000); // Simulate 2-second delay for the loading effect
+});
