@@ -127,7 +127,6 @@ function renderAccordion(sections, container, type) {
 
 // Select the mouse background element
 const mouseBackground = document.getElementById('mouse-background');
-const preferencesForm = document.getElementById('preferencesForm');
 const loadingSpinner = document.getElementById('loadingSpinner');
 
 // Add event listener for mouse movement
