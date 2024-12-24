@@ -129,7 +129,6 @@ function renderAccordion(sections, container, type) {
 const mouseBackground = document.getElementById('mouse-background');
 const preferencesForm = document.getElementById('preferencesForm');
 const loadingSpinner = document.getElementById('loadingSpinner');
-const recommendationsAccordion = document.getElementById('recommendationsAccordion');
 
 // Add event listener for mouse movement
 document.addEventListener('mousemove', (event) => {
