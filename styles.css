@@ -6,7 +6,6 @@ body {
   margin: 0;
   padding: 0;
   position: relative; /* For positioning the mouse-follow background */
-  overflow: hidden; /* Prevents scrollbars from appearing when the background is moved */
 }
 
 /* Mouse-follow background */
