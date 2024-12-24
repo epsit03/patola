@@ -127,6 +127,9 @@ function renderAccordion(sections, container, type) {
 
 // Select the mouse background element
 const mouseBackground = document.getElementById('mouse-background');
+const preferencesForm = document.getElementById('preferencesForm');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const recommendationsAccordion = document.getElementById('recommendationsAccordion');
 
 // Add event listener for mouse movement
 document.addEventListener('mousemove', (event) => {
@@ -150,3 +153,36 @@ document.addEventListener('mousemove', () => {
   }, 100);
 });
 
+// Handle the form submission
+preferencesForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  // Show the loading spinner and hide recommendations
+  loadingSpinner.style.display = 'block';
+  recommendationsAccordion.style.display = 'none';
+
+  // Simulate an API call to fetch recommendations (this will be replaced by real data in a real app)
+  setTimeout(() => {
+    // Simulate recommendations loading
+    loadingSpinner.style.display = 'none';
+    recommendationsAccordion.style.display = 'block';
+
+    // Add dummy recommendations to the accordion
+    recommendationsAccordion.innerHTML = `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+            Recommended Products for Oily Skin
+          </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#recommendationsAccordion">
+          <div class="accordion-body">
+            - Product 1: Oil-free foundation<br>
+            - Product 2: Mattifying primer<br>
+            - Product 3: Powder blush
+          </div>
+        </div>
+      </div>
+    `;
+  }, 2000); // Simulate 2-second delay for the loading effect
+});
